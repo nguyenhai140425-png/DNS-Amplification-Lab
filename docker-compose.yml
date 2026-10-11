@@ -1,0 +1,55 @@
+services:
+  attacker:
+    build:
+      context: ./attacker
+      dockerfile: Dockerfile
+    image: dns-lab-attacker:latest
+    container_name: attacker
+    hostname: attacker
+    command: ["sleep", "infinity"]
+    stdin_open: true
+    tty: true
+    networks:
+      dns_lab:
+        ipv4_address: 172.20.0.10
+    volumes:
+      - ./attacker/script.py:/lab/script.py:rw
+  reflector:
+    build:
+      context: ./reflector
+      dockerfile: Dockerfile
+    image: dns-lab-reflector:latest
+    container_name: reflector
+    hostname: reflector
+    command:
+      - named
+      - -g
+      - -c
+      - /etc/bind/named.conf.lab
+    networks:
+      dns_lab:
+        ipv4_address: 172.20.0.20
+
+  victim:
+    build:
+      context: ./victim
+      dockerfile: Dockerfile
+    image: dns-lab-victim:latest
+    container_name: victim
+    hostname: victim
+    command: ["sleep", "infinity"]
+    stdin_open: true
+    tty: true
+    networks:
+      dns_lab:
+        ipv4_address: 172.20.0.30
+
+networks:
+  dns_lab:
+    name: dns-amplification-lab
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
